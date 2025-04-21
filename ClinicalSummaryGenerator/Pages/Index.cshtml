@@ -6,7 +6,7 @@
 
 <h1>Clinical Summary Generator</h1>
 
-<form method="post">
+<form method="post" id="search-form">
     <div>
         <label for="SummaryStyle">Summary Style:</label>
         <select asp-for="SummaryStyle">
@@ -21,7 +21,12 @@
         <textarea asp-for="ClinicalText" rows="10" cols="100"></textarea>
     </div>
 
-    <button type="submit" style="margin-top: 1rem;">Generate Summary</button>
+    @* <div style="margin-top: 1rem;"></div> *@
+        <button type="submit" style="margin-top: 1rem;" id="search-button">
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="search-spinner"></span>
+            <span id="search-button-text">Generate Summary</span>
+        </button>
+    @* </div> *@
 </form>
 
 @if (Model.Summary != null)
@@ -29,4 +34,30 @@
     <hr />
     <h3>Generated Summary:</h3>
     <pre>@Model.Summary</pre>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('search-form');
+            const button = document.getElementById('search-button');
+            const spinner = document.getElementById('search-spinner');
+            const buttonText = document.getElementById('search-button-text');
+
+            if (form && button && spinner) {
+                form.addEventListener('submit', function() {
+                    // Disable the button
+                    button.disabled = true;
+
+                    // Show the spinner
+                    spinner.classList.remove('d-none');
+
+                    if (buttonText) {
+                         buttonText.innerText = 'Working...'; // Or hide it: buttonText.classList.add('d-none');
+                         @* buttonText.classList.add('d-none'); // Alternatively, hide the button text *@
+                    }
+                });
+            }
+        });
+    </script>
 }
