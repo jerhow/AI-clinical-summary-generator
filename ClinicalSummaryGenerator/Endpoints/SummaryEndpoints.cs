@@ -1,27 +1,26 @@
-using ClinicalSummaryApp.Models;
+using ClinicalSummaryGenerator.Models;
+using ClinicalSummaryGenerator.Services;
 
-namespace ClinicalSummaryApp.Endpoints;
+namespace ClinicalSummaryGenerator.Endpoints;
 
 public static class SummaryEndpoints
 {
     public static void MapSummaryEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/summarize", async (SummarizeRequest request) =>
+        app.MapPost("/summarize", async (SummarizeRequest request, AiService aiService) =>
         {
             if (string.IsNullOrWhiteSpace(request.ClinicalText))
             {
                 return Results.BadRequest("Clinical text is required.");
             }
 
-            // Placeholder GPT call
-            var response = new SummarizeResponse
-            {
-                Summary = $"[Mock Summary for style '{request.SummaryStyle ?? "default"}']\n\n" +
-                          "This is a placeholder summary generated from the clinical text.",
-                TokenUsage = null
-            };
+            var gptResponse = await aiService.SummarizeAsync(request.ClinicalText, request.SummaryStyle);
 
-            return Results.Ok(response);
+            return Results.Ok(new SummarizeResponse
+            {
+                Summary = gptResponse.Summary,
+                TokenUsage = gptResponse.TokenUsage
+            });
         });
     }
 }

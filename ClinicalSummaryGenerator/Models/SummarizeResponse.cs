@@ -1,4 +1,4 @@
-namespace ClinicalSummaryApp.Models;
+namespace ClinicalSummaryGenerator.Models;
 
 public class SummarizeResponse
 {
