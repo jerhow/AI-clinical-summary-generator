@@ -1,4 +1,3 @@
-using ClinicalSummaryGenerator.Models;
 using ClinicalSummaryGenerator.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -8,10 +7,12 @@ namespace ClinicalSummaryGenerator.Pages;
 public class IndexModel : PageModel
 {
     private readonly AiService _aiService;
+    public int ClinicalTextMaxLength { get; set; }
 
-    public IndexModel(AiService aiService)
+    public IndexModel(IConfiguration config, AiService aiService)
     {
         _aiService = aiService;
+        ClinicalTextMaxLength = config.GetValue<int>("UI:ClinicalTextMaxLength", 8000);
     }
 
     [BindProperty]

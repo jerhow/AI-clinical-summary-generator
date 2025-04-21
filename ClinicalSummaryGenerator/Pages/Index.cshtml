@@ -18,7 +18,7 @@
 
     <div style="margin-top: 1rem;">
         <label for="ClinicalText">Clinical Note:</label><br />
-        <textarea asp-for="ClinicalText" rows="10" cols="100"></textarea>
+        <textarea asp-for="ClinicalText" rows="10" cols="100" maxlength="@Model.ClinicalTextMaxLength"></textarea>
     </div>
 
     @* <div style="margin-top: 1rem;"></div> *@
