@@ -18,15 +18,17 @@
 
     <div style="margin-top: 1rem;">
         <label for="ClinicalText">Clinical Note:</label><br />
-        <textarea asp-for="ClinicalText" rows="10" cols="100" maxlength="@Model.ClinicalTextMaxLength"></textarea>
+        <textarea asp-for="ClinicalText" rows="10" cols="100" maxlength="@Model.ClinicalTextMaxLength" id="clinical-note-text"></textarea>
+        <div class="text-muted small">
+            <span id="char-count">0</span> / @Model.ClinicalTextMaxLength characters
+        </div>
+
     </div>
 
-    @* <div style="margin-top: 1rem;"></div> *@
-        <button type="submit" style="margin-top: 1rem;" id="search-button">
-            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="search-spinner"></span>
-            <span id="search-button-text">Generate Summary</span>
-        </button>
-    @* </div> *@
+    <button type="submit" style="margin-top: 1rem;" id="search-button">
+        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="search-spinner"></span>
+        <span id="search-button-text">Generate Summary</span>
+    </button>
 </form>
 
 @if (Model.Summary != null)
@@ -46,12 +48,11 @@
 
             if (form && button && spinner) {
                 form.addEventListener('submit', function() {
-                    // Disable the button
                     button.disabled = true;
 
                     // Show the spinner
                     spinner.classList.remove('d-none');
-
+                    
                     if (buttonText) {
                          buttonText.innerText = 'Working...'; // Or hide it: buttonText.classList.add('d-none');
                          @* buttonText.classList.add('d-none'); // Alternatively, hide the button text *@
@@ -59,5 +60,23 @@
                 });
             }
         });
+
+        // ===============================================================================
+        // Update the character count in the textarea as the user types.
+        const clinicalNoteTextArea = document.getElementById('clinical-note-text');
+        const charCount = document.getElementById('char-count');
+
+        function updateCharacterCount() {
+            const currentText = clinicalNoteTextArea.value;
+            const currentLength = currentText.length;
+            charCount.textContent = currentLength;
+        }
+
+        // The 'input' event fires every time the value of the textarea changes (typing, pasting, etc.)
+        clinicalNoteTextArea.addEventListener('input', updateCharacterCount);
+
+        // Run the function once when the page loads in case the textarea
+        // already has some text in it (e.g., filled by the server or browser cache).
+        updateCharacterCount();
     </script>
 }
