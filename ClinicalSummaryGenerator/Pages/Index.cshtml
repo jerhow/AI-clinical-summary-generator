@@ -1,10 +1,32 @@
 ﻿@page
-@model IndexModel
+@model ClinicalSummaryGenerator.Pages.IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Clinical Summary Generator";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h1>Clinical Summary Generator</h1>
+
+<form method="post">
+    <div>
+        <label for="SummaryStyle">Summary Style:</label>
+        <select asp-for="SummaryStyle">
+            <option value="brief">Brief</option>
+            <option value="detailed">Detailed</option>
+            <option value="soap">SOAP</option>
+        </select>
+    </div>
+
+    <div style="margin-top: 1rem;">
+        <label for="ClinicalText">Clinical Note:</label><br />
+        <textarea asp-for="ClinicalText" rows="10" cols="100"></textarea>
+    </div>
+
+    <button type="submit" style="margin-top: 1rem;">Generate Summary</button>
+</form>
+
+@if (Model.Summary != null)
+{
+    <hr />
+    <h3>Generated Summary:</h3>
+    <pre>@Model.Summary</pre>
+}
