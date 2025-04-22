@@ -13,6 +13,7 @@ obj/
 wwwroot/dist/
 dist/
 .bundle/
+**/publish/
 
 ## Secrets
 secrets.json
