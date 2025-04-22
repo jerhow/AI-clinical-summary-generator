@@ -15,6 +15,9 @@ dist/
 .bundle/
 **/publish/
 
+# App deployment zip files
+**/app_deploy_*.zip
+
 ## Secrets
 secrets.json
 appsettings.Development.json
