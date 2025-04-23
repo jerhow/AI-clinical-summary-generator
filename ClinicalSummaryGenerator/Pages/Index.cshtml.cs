@@ -9,6 +9,7 @@ public class IndexModel : PageModel
     private readonly AiService _aiService;
     public int ClinicalTextMaxLength { get; set; }
     public string? SelectedSummaryStyle { get; set; }
+    public string? ErrorMessage { get; set; }
 
     public IndexModel(IConfiguration config, AiService aiService)
     {
@@ -34,9 +35,17 @@ public class IndexModel : PageModel
 
         SelectedSummaryStyle = SummaryStyle;
 
-        var response = await _aiService.SummarizeAsync(ClinicalText, SummaryStyle);
-        Summary = response.Summary;
-
+        try
+        {
+            var response = await _aiService.SummarizeAsync(ClinicalText!, SummaryStyle!);
+            Summary = response.Summary;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error generating summary: {ex.Message}");
+            ErrorMessage = "Something went wrong while generating the summary. Please try again.";
+        }
+        
         return Page();
     }
 }
