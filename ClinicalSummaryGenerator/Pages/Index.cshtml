@@ -35,7 +35,16 @@
 {
     <hr />
     <h3>Generated Summary:</h3>
-    <pre>@Model.Summary</pre>
+
+    <pre id="summary-output" style="white-space: pre-wrap;">@Model.Summary</pre>
+
+    <div class="mb-2">
+        <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" onclick="copySummary()" id="copy-btn">
+            <i class="bi bi-clipboard me-2" id="copy-icon"></i>
+            <span id="copy-text">Copy Summary to Clipboard</span>
+        </button>
+        <span id="copy-feedback" class="text-success ms-2" style="display: none;">Copied!</span>
+    </div>
 }
 
 @section Scripts {
@@ -60,7 +69,9 @@
                 });
             }
         });
+    </script>
 
+    <script>
         // ===============================================================================
         // Update the character count in the textarea as the user types.
         const clinicalNoteTextArea = document.getElementById('clinical-note-text');
@@ -78,5 +89,31 @@
         // Run the function once when the page loads in case the textarea
         // already has some text in it (e.g., filled by the server or browser cache).
         updateCharacterCount();
+    </script>
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function copySummary() {
+            const text = document.getElementById("summary-output").textContent;
+            const icon = document.getElementById("copy-icon");
+            const label = document.getElementById("copy-text");
+
+            // Sanity check
+            if (!icon || !label) {
+                console.error("Missing icon or label element!");
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                icon.className = "bi bi-clipboard-check-fill me-2";
+                label.textContent = "Copied!";
+
+                setTimeout(() => {
+                    icon.className = "bi bi-clipboard me-2";
+                    label.textContent = "Copy Summary to Clipboard";
+                }, 1500);
+            });
+        }
     </script>
 }
