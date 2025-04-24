@@ -24,9 +24,6 @@
         <li>Select the summary style you prefer (Brief, Detailed, or SOAP format)</li>
         <li>Click "Generate Summary"</li>
     </ul>
-     @* Upload a file containing your clinical notes, or type/paste notes in the text area below.
-    <br />
-    Select the summary style you prefer (Brief, Detailed, or SOAP format) and click "Generate Summary". *@
 </div>
 
 <form method="post" enctype="multipart/form-data">
@@ -47,6 +44,7 @@
             <option value="brief">Brief</option>
             <option value="detailed">Detailed</option>
             <option value="soap">SOAP</option>
+            <option value="structured">Structured Extraction</option>
         </select>
     </div>
 
@@ -68,12 +66,11 @@
 @if (Model.Summary != null)
 {
     <hr />
-    <h3>Generated Summary:</h3>
+    <br />
+    <h3>@Model.SummaryStyleLabels[Model.SummaryStyle] Summary:</h3>
 
-    @* <pre id="summary-output" style="white-space: pre-wrap;">@Model.Summary</pre> *@
-
-    <div id="summary-output">
-        @if (Model.SelectedSummaryStyle == "brief")
+    <div id="summary-output" class="border rounded bg-light p-3 mt-4 shadow">
+        @if (Model.SummaryStyle == "brief")
         {
             var lines = Model.Summary?.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             if (lines is not null && lines.Any())
@@ -90,7 +87,7 @@
                 <pre style="white-space: pre-wrap;">@Model.Summary</pre>
             }
         }
-        else if (Model.SelectedSummaryStyle == "soap")
+        else if (Model.SummaryStyle == "soap")
         {
             var sections = Model.Summary?.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             foreach (var section in sections ?? Enumerable.Empty<string>())
@@ -118,14 +115,39 @@
                 }
             }
         }
-        else
+        else if (Model.SummaryStyle == "detailed")
         {
             <pre style="white-space: pre-wrap;">@Model.Summary</pre>
         }
+        else if (Model.SummaryStyle == "structured" && Model.Structured != null)
+        {
+            <h5 class="mt-3">Diagnoses</h5>
+            <ul>
+                @foreach (var item in Model.Structured.Diagnoses)
+                {
+                    <li>@item</li>
+                }
+            </ul>
+
+            <h5 class="mt-3">Medications</h5>
+            <ul>
+                @foreach (var item in Model.Structured.Medications)
+                {
+                    <li>@item</li>
+                }
+            </ul>
+
+            <h5 class="mt-3">Plan</h5>
+            <ul>
+                @foreach (var item in Model.Structured.Plan)
+                {
+                    <li>@item</li>
+                }
+            </ul>
+        }
     </div>
 
-
-    <div class="mb-2">
+    <div class="mb-2" style="margin-top: 1rem;">
         <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" onclick="copySummary()" id="copy-btn">
             <i class="bi bi-clipboard me-2" id="copy-icon"></i>
             <span id="copy-text">Copy Summary to Clipboard</span>

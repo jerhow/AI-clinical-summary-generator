@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DocumentFormat.OpenXml.Packaging;
+using System.Text.Json;
 using ClinicalSummaryGenerator.Services;
+using ClinicalSummaryGenerator.Models;
 
 namespace ClinicalSummaryGenerator.Pages;
 
@@ -9,9 +11,17 @@ public class IndexModel : PageModel
 {
     private readonly AiService _aiService;
     public int ClinicalTextMaxLength { get; set; }
-    public string? SelectedSummaryStyle { get; set; }
     public string? ErrorMessage { get; set; }
     public string? Summary { get; set; }
+    public StructuredSummary? Structured { get; set; }
+
+    public Dictionary<string, string> SummaryStyleLabels { get; } = new()
+    {
+        { "brief", "Brief" },
+        { "detailed", "Detailed" },
+        { "soap", "SOAP" },
+        { "structured", "Structured Extraction" }
+    };
 
     [BindProperty]
     public string? ClinicalText { get; set; }
@@ -54,17 +64,13 @@ public class IndexModel : PageModel
             }
         }
 
-        // Always validating the final state
-        if (string.IsNullOrWhiteSpace(ClinicalText))
+        if (string.IsNullOrWhiteSpace(ClinicalText)) // Always validating the final state
         {
             ModelState.AddModelError("ClinicalText", "Clinical text is required.");
             return Page();
         }
 
-        SelectedSummaryStyle = SummaryStyle;
-
-        // If action was just to load the file, we're done
-        if (action == "load")
+        if (action == "load") // If action was just to load the file, we're done
         {
             return Page();
         }
@@ -72,7 +78,19 @@ public class IndexModel : PageModel
         try
         {
             var response = await _aiService.SummarizeAsync(ClinicalText!, SummaryStyle!);
-            Summary = response.Summary;
+
+            if (SummaryStyle == "structured")
+            {
+                Structured = response.Summary != null 
+                    ? JsonSerializer.Deserialize<StructuredSummary>(response.Summary) 
+                    : null;
+
+                Summary = "";
+            }
+            else
+            {
+                Summary = response.Summary;
+            }
         }
         catch (Exception ex)
         {
