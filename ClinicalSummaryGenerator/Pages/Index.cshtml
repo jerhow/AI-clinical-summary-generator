@@ -45,6 +45,7 @@
             <option value="detailed">Detailed</option>
             <option value="soap">SOAP</option>
             <option value="structured">Structured Extraction</option>
+            <option value="rawjson">Structured Extraction (JSON)</option>
         </select>
     </div>
 
@@ -145,8 +146,16 @@
                 }
             </ul>
         }
+        else if (Model.SummaryStyle == "rawjson")
+        {
+            <pre class="border rounded bg-light p-3 mt-3" style="white-space: pre-wrap;" id="summary-output-json">@Model.Summary</pre>
+        }
+        else
+        {
+            <p>@Model.Summary</p>
+        }
     </div>
-
+    
     <div class="mb-2" style="margin-top: 1rem;">
         <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center" onclick="copySummary()" id="copy-btn">
             <i class="bi bi-clipboard me-2" id="copy-icon"></i>
@@ -204,7 +213,12 @@
 
     <script>
         function copySummary() {
-            const text = document.getElementById("summary-output").textContent;
+            const summaryStyle = "@Model.SummaryStyle";
+            var summaryOutputId = "summary-output";
+            if (summaryStyle == "rawjson") { 
+                summaryOutputId = "summary-output-json";
+            }
+            const text = document.getElementById(summaryOutputId).textContent;
             const icon = document.getElementById("copy-icon");
             const label = document.getElementById("copy-text");
 

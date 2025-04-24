@@ -20,7 +20,8 @@ public class IndexModel : PageModel
         { "brief", "Brief" },
         { "detailed", "Detailed" },
         { "soap", "SOAP" },
-        { "structured", "Structured Extraction" }
+        { "structured", "Structured Extraction" },
+        { "rawjson", "Structured Extraction (JSON)" }
     };
 
     [BindProperty]
@@ -85,7 +86,22 @@ public class IndexModel : PageModel
                     ? JsonSerializer.Deserialize<StructuredSummary>(response.Summary) 
                     : null;
 
-                Summary = "";
+                Summary = ""; // summary cannot be null in this case
+            }
+            else if (SummaryStyle == "rawjson")
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(response.Summary);
+                    Summary = JsonSerializer.Serialize(doc, new JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    });
+                }
+                catch
+                {
+                    Summary = response.Summary; // Fallback: Show unformatted raw string
+                }
             }
             else
             {
