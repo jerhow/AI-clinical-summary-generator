@@ -2,6 +2,14 @@ namespace ClinicalSummaryGenerator.Helpers;
 
 public static class SecurityHelpers
 {
+    /// <summary>
+    /// Checks if the request is authorized by validating the API key in the Authorization header.
+    /// It compares the token in the header with the expected token from the configuration.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="config"></param>
+    /// <param name="error"></param>
+    /// <returns></returns>
     public static bool IsAuthorized(HttpRequest request, IConfiguration config, out string? error)
     {
         error = null;
