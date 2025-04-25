@@ -1,5 +1,6 @@
 using ClinicalSummaryGenerator.Endpoints;
 using ClinicalSummaryGenerator.Services;
+using ClinicalSummaryGenerator.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 builder.Services.AddHttpClient<AiService>();
+
+builder.Services.AddSingleton<IClinicalSummaryCache, InMemorySummaryCache>();
 
 var app = builder.Build();
 

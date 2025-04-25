@@ -1,9 +1,12 @@
+using System.Text;
+using System.Text.Json;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DocumentFormat.OpenXml.Packaging;
-using System.Text.Json;
-using ClinicalSummaryGenerator.Services;
 using ClinicalSummaryGenerator.Models;
+using ClinicalSummaryGenerator.Services;
+using ClinicalSummaryGenerator.Services.Interfaces;
 
 namespace ClinicalSummaryGenerator.Pages;
 
@@ -14,6 +17,7 @@ public class IndexModel : PageModel
     public string? ErrorMessage { get; set; }
     public string? Summary { get; set; }
     public StructuredSummary? Structured { get; set; }
+    private readonly IClinicalSummaryCache _cache;
 
     public Dictionary<string, string> SummaryStyleLabels { get; } = new()
     {
@@ -33,9 +37,10 @@ public class IndexModel : PageModel
     [BindProperty]
     public IFormFile? ClinicalNoteFile { get; set; }
 
-    public IndexModel(IConfiguration config, AiService aiService)
+    public IndexModel(IConfiguration config, AiService aiService, IClinicalSummaryCache cache)
     {
         _aiService = aiService;
+        _cache = cache;
         ClinicalTextMaxLength = config.GetValue<int>("UI:ClinicalTextMaxLength", 8000);
     }
 
@@ -76,7 +81,25 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        try
+        // Generate hash key and check the cache
+        var hashKey = GenerateHash(ClinicalText + SummaryStyle);
+        var cachedSummary = await _cache.GetAsync(hashKey);
+        if (cachedSummary != null)
+        {
+            if (SummaryStyle == "structured")
+            {
+                Structured = JsonSerializer.Deserialize<StructuredSummary>(cachedSummary);
+                Summary = ""; // summary cannot be null in this case
+            }
+            else
+            {
+                Summary = cachedSummary;
+            }
+
+            return Page();
+        }
+
+        try // No cache hit, proceed with GPT call
         {
             var response = await _aiService.SummarizeAsync(ClinicalText!, SummaryStyle!);
 
@@ -107,6 +130,9 @@ public class IndexModel : PageModel
             {
                 Summary = response.Summary;
             }
+
+            // Cache the result (summary)
+            await _cache.SetAsync(hashKey, response.Summary!);
         }
         catch (Exception ex)
         {
@@ -115,5 +141,12 @@ public class IndexModel : PageModel
         }
 
         return Page();
+    }
+
+    private static string GenerateHash(string input)
+    {
+        using var sha = SHA256.Create();
+        var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(input));
+        return Convert.ToBase64String(bytes);
     }
 }
