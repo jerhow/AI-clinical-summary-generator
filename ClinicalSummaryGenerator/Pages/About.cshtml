@@ -1,0 +1,62 @@
+﻿@page
+@model AboutModel
+@{
+    ViewData["Title"] = "AI-Powered Clinical Summary Generator — System Summary";
+}
+
+<div class="container">
+    <h2>@ViewData["Title"]</h2>
+
+    <br />
+    <p>The Clinical Summary Generator is an AI-powered web application that analyzes unstructured clinical notes and generates clear, concise summaries. It can also extract structured clinical data such as diagnoses, medications, and plan items. The app is designed to help clinicians, developers, and healthcare stakeholders make unstructured documentation more usable.</p>
+
+    <h3>Features</h3>
+    <ul>
+        <li>Accepts pasted text or uploaded <code>.txt</code> and <code>.docx</code> clinical notes</li>
+        <li>Generates concise summaries using Azure OpenAI</li>
+        <li>Extracts structured fields (Diagnoses, Medications, Plan)</li>
+        <li>Copy-to-clipboard functionality</li>
+        <li>Local file caching (during development) to avoid redundant GPT calls</li>
+        <li>Built with ASP.NET Razor Pages and .NET 8</li>
+        <li>Deployable to Azure App Service</li>
+    </ul>
+
+    <h3>Summary Styles</h3>
+    <p>Users can select from five summary styles:</p>
+    <ul>
+        <li><strong>Brief</strong> – 3–5 key bullet points</li>
+        <li><strong>Detailed</strong> – Narrative summary</li>
+        <li><strong>SOAP</strong> – Structured output in Subjective, Objective, Assessment, Plan format</li>
+        <li><strong>Structured Extraction</strong> – Displays extracted clinical data in labeled sections</li>
+        <li><strong>Structured (Raw JSON)</strong> – Returns the same extracted data in JSON format</li>
+    </ul>
+
+    <h3>File Upload Support</h3>
+    <p>Users can upload <code>.txt</code> or <code>.docx</code> clinical notes. The application extracts readable text and populates the form automatically, overwriting any manual input.</p>
+    <ul>
+        <li><code>.txt</code> files are read as-is</li>
+        <li><code>.docx</code> files are parsed using Open XML SDK, with formatting stripped</li>
+    </ul>
+
+    <h3>Use Cases</h3>
+    <ul>
+        <li>Assisting clinicians with documentation</li>
+        <li>Normalizing narrative text into structured records</li>
+        <li>Rapid EHR data entry prototyping</li>
+        <li>AI prompt testing with medical content</li>
+    </ul>
+
+    <h3>Developer Notes</h3>
+    <ul>
+        <li>GPT calls are made using Azure OpenAI’s chat completion endpoint</li>
+        <li>The system prompt and summary styles are stored in environment variables for flexibility</li>
+        <li>Local development uses in-memory caching</li>
+        <li>The application is designed to run both locally and in Azure</li>
+    </ul>
+
+    <h3>Code and License</h3>
+    <ul>
+        <li><a href="https://github.com/jerhow/AI-clinical-summary-generator" target="_blank">GitHub Repository</a></li>
+        <li>This project is licensed under the <a href="https://github.com/jerhow/AI-clinical-summary-generator/blob/main/LICENSE" target="_blank">MIT License</a>.</li>
+    </ul>
+</div>
