@@ -46,7 +46,49 @@ public class IndexModel : PageModel
         ClinicalTextMaxLength = config.GetValue<int>("UI:ClinicalTextMaxLength", 8000);
     }
 
+    /// <summary>
+    /// Handles the form submission for generating a clinical summary.
+    /// It processes the uploaded file, validates the clinical text, and generates a summary using the AI service.
+    /// The action parameter determines the type of action to perform (e.g., load or generate).
+    /// If the action is "load", it simply loads the file without generating a summary.
+    /// If the action is to generate, it checks the cache for an existing summary and generates a new one if not found.
+    /// </summary>
+    /// <param name="action"></param>
+    /// <returns></returns>
     public async Task<IActionResult> OnPostAsync(string action)
+    {
+        await ProcessUploadedFileAsync();
+
+        if (!ValidateClinicalText())
+        {
+            return Page();
+        }
+
+        if (action == "load")
+        {
+            return Page();
+        }
+
+        _logger.LogInformation("Received form submission. SummaryStyle: {Style}, TextLength: {Length}", SummaryStyle, ClinicalText?.Length ?? 0);
+
+        var hashKey = GenerateHash(ClinicalText + SummaryStyle);
+
+        if (await TryLoadFromCacheAsync(hashKey))
+        {
+            return Page();
+        }
+
+        await GenerateSummaryAsync(hashKey);
+
+        return Page();
+    }
+
+    /// <summary>
+    /// Processes the uploaded file, reads its content, and sets the ClinicalText property.
+    /// Currently supports .txt and .docx formats.
+    /// </summary>
+    /// <returns></returns>
+    private async Task ProcessUploadedFileAsync()
     {
         if (ClinicalNoteFile != null && ClinicalNoteFile.Length > 0)
         {
@@ -68,46 +110,63 @@ public class IndexModel : PageModel
             else
             {
                 ModelState.AddModelError("ClinicalNoteFile", "Only .txt and .docx files are supported.");
-                return Page();
             }
         }
+    }
 
-        if (string.IsNullOrWhiteSpace(ClinicalText)) // Always validating the final state
+    /// <summary>
+    /// Validates the clinical text input.
+    /// </summary>
+    /// <returns></returns>
+    private bool ValidateClinicalText()
+    {
+        if (string.IsNullOrWhiteSpace(ClinicalText))
         {
             ModelState.AddModelError("ClinicalText", "Clinical text is required.");
-            return Page();
+            return false;
         }
+        return true;
+    }
 
-        if (action == "load") // If action was just to load the file, we're done
-        {
-            return Page();
-        }
-
-        _logger.LogInformation("Received form submission. SummaryStyle: {Style}, TextLength: {Length}", SummaryStyle, ClinicalText?.Length ?? 0);
-        
-        // Generate hash key and check the cache
-        var hashKey = GenerateHash(ClinicalText + SummaryStyle);
+    /// <summary>
+    /// Tries to load the summary from the cache.
+    /// </summary>
+    /// <param name="hashKey"></param>
+    /// <returns></returns>
+    private async Task<bool> TryLoadFromCacheAsync(string hashKey)
+    {
         var cachedSummary = await _cache.GetAsync(hashKey);
-        if (cachedSummary != null)
-        {
-            _logger.LogInformation("Cache hit for input. Hash: {Hash}", hashKey);
-            
-            if (SummaryStyle == "structured")
-            {
-                Structured = JsonSerializer.Deserialize<StructuredSummary>(cachedSummary);
-                Summary = ""; // summary cannot be null in this case
-            }
-            else
-            {
-                Summary = cachedSummary;
-            }
 
-            return Page();
+        if (cachedSummary == null)
+        {
+            _logger.LogInformation("Cache miss. Sending input to AI service. Hash: {Hash}", hashKey);
+            return false;
         }
 
-        _logger.LogInformation("Cache miss. Sending input to AI service. Hash: {Hash}", hashKey);
+        _logger.LogInformation("Cache hit for input. Hash: {Hash}", hashKey);
 
-        try // No cache hit, proceed with GPT call
+        if (SummaryStyle == "structured")
+        {
+            Structured = JsonSerializer.Deserialize<StructuredSummary>(cachedSummary);
+            Summary = "";
+        }
+        else
+        {
+            Summary = cachedSummary;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Generates a summary using the AI service and caches the result.
+    /// This method is called when there is no cache hit.
+    /// </summary>
+    /// <param name="hashKey"></param>
+    /// <returns></returns>
+    private async Task GenerateSummaryAsync(string hashKey)
+    {
+        try
         {
             var response = await _aiService.SummarizeAsync(ClinicalText!, SummaryStyle!);
 
@@ -116,8 +175,7 @@ public class IndexModel : PageModel
                 Structured = response.Summary != null 
                     ? JsonSerializer.Deserialize<StructuredSummary>(response.Summary) 
                     : null;
-
-                Summary = ""; // summary cannot be null in this case
+                Summary = "";
             }
             else if (SummaryStyle == "rawjson")
             {
@@ -131,7 +189,7 @@ public class IndexModel : PageModel
                 }
                 catch
                 {
-                    Summary = response.Summary; // Fallback: Show unformatted raw string
+                    Summary = response.Summary;
                 }
             }
             else
@@ -139,13 +197,11 @@ public class IndexModel : PageModel
                 Summary = response.Summary;
             }
 
-            // Cache the result (summary)
             await _cache.SetAsync(hashKey, response.Summary!);
         }
         catch (AiServiceException ex)
         {
             _logger.LogError(ex, "AI service failed. StatusCode: {StatusCode}", ex.StatusCode);
-            Console.Error.WriteLine($"Error generating summary: {ex.Message}");
             ErrorMessage = "Something went wrong while generating the summary. Please try again.";
         }
         catch (Exception ex)
@@ -153,10 +209,13 @@ public class IndexModel : PageModel
             _logger.LogError(ex, "Unhandled error during summary generation.");
             ErrorMessage = "An unexpected error occurred. Please try again.";
         }
-
-        return Page();
     }
 
+    /// <summary>
+    /// Generates a hash for the given input string using SHA256.
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
     private static string GenerateHash(string input)
     {
         using var sha = SHA256.Create();
