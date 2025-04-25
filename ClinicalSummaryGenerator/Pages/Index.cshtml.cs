@@ -18,6 +18,7 @@ public class IndexModel : PageModel
     public string? Summary { get; set; }
     public StructuredSummary? Structured { get; set; }
     private readonly IClinicalSummaryCache _cache;
+    private readonly ILogger<IndexModel> _logger;
 
     public Dictionary<string, string> SummaryStyleLabels { get; } = new()
     {
@@ -37,10 +38,11 @@ public class IndexModel : PageModel
     [BindProperty]
     public IFormFile? ClinicalNoteFile { get; set; }
 
-    public IndexModel(IConfiguration config, AiService aiService, IClinicalSummaryCache cache)
+    public IndexModel(IConfiguration config, AiService aiService, IClinicalSummaryCache cache, ILogger<IndexModel> logger)
     {
         _aiService = aiService;
         _cache = cache;
+        _logger = logger;
         ClinicalTextMaxLength = config.GetValue<int>("UI:ClinicalTextMaxLength", 8000);
     }
 
@@ -81,11 +83,15 @@ public class IndexModel : PageModel
             return Page();
         }
 
+        _logger.LogInformation("Received form submission. SummaryStyle: {Style}, TextLength: {Length}", SummaryStyle, ClinicalText?.Length ?? 0);
+        
         // Generate hash key and check the cache
         var hashKey = GenerateHash(ClinicalText + SummaryStyle);
         var cachedSummary = await _cache.GetAsync(hashKey);
         if (cachedSummary != null)
         {
+            _logger.LogInformation("Cache hit for input. Hash: {Hash}", hashKey);
+            
             if (SummaryStyle == "structured")
             {
                 Structured = JsonSerializer.Deserialize<StructuredSummary>(cachedSummary);
@@ -98,6 +104,8 @@ public class IndexModel : PageModel
 
             return Page();
         }
+
+        _logger.LogInformation("Cache miss. Sending input to AI service. Hash: {Hash}", hashKey);
 
         try // No cache hit, proceed with GPT call
         {
@@ -134,10 +142,16 @@ public class IndexModel : PageModel
             // Cache the result (summary)
             await _cache.SetAsync(hashKey, response.Summary!);
         }
-        catch (Exception ex)
+        catch (AiServiceException ex)
         {
+            _logger.LogError(ex, "AI service failed. StatusCode: {StatusCode}", ex.StatusCode);
             Console.Error.WriteLine($"Error generating summary: {ex.Message}");
             ErrorMessage = "Something went wrong while generating the summary. Please try again.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unhandled error during summary generation.");
+            ErrorMessage = "An unexpected error occurred. Please try again.";
         }
 
         return Page();
