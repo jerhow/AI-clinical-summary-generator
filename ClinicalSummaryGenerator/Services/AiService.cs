@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -44,7 +45,20 @@ public class AiService
         request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
         var response = await _httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            var statusCode = (int)response.StatusCode;
+            var reason = response.ReasonPhrase ?? "No reason provided";
+
+            Console.Error.WriteLine($"GPT Error {statusCode} ({reason}): {errorContent}");
+
+            throw new AiServiceException(
+                $"GPT request failed with status {statusCode} ({reason}): {errorContent}",
+                response.StatusCode
+            );
+        }
 
         using var contentStream = await response.Content.ReadAsStreamAsync();
         using var json = await JsonDocument.ParseAsync(contentStream);
@@ -64,5 +78,16 @@ public class AiService
             Summary = message,
             TokenUsage = tokens
         };
+    }
+}
+
+public class AiServiceException : Exception
+{
+    public HttpStatusCode? StatusCode { get; }
+
+    public AiServiceException(string message, HttpStatusCode? statusCode = null)
+        : base(message)
+    {
+        StatusCode = statusCode;
     }
 }
