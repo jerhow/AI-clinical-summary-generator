@@ -4,6 +4,8 @@
 
 https://github.com/user-attachments/assets/a91cdeae-41a6-469b-9ee1-899dfb203b6e
 
+https://github.com/user-attachments/assets/3647ea29-ff2c-4e9e-8936-02b5cc1506b7
+
 ## Features
 
 - Accepts pasted text or uploaded `.txt` and `.docx` clinical notes
