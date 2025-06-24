@@ -1,6 +1,6 @@
-# Clinical Summary Generator
+# AI-Powered Clinical Summary Generator
 
-**Clinical Summary Generator** is an AI-powered web application that analyzes unstructured clinical notes and generates clear, concise summaries. It can also extract structured clinical data such as diagnoses, medications, and plan items. The app is designed to help clinicians, developers, and healthcare stakeholders make unstructured documentation more usable.
+This **Clinical Summary Generator** is an AI-powered web application that analyzes unstructured clinical notes and generates clear, concise summaries. It can also extract structured clinical data such as diagnoses, medications, and plan items. The app is designed to help clinicians, developers, and healthcare stakeholders make unstructured documentation more usable.
 
 https://github.com/user-attachments/assets/a91cdeae-41a6-469b-9ee1-899dfb203b6e
 
